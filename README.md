@@ -9,8 +9,9 @@ In **Stage Two**, I added offline indexing with IndexedDB and achieving a set of
 
 ### setup
 
-1. Clone and download the repo and from the application root run: "npm install"
-1. To run the application from the app root run: "gulp"
+1. Ensure the server is is running
+2. Clone and download the repo and from the application root run: "npm install"
+3. To run the application from the app root run: "gulp"
 
 
 

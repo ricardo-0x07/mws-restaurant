@@ -1,5 +1,5 @@
 {
-  "name": "mws-restaurant-stage-2",
+  "name": "mws-restaurant-stage",
   "version": "1.0.0",
   "description": "a mobile-ready web application",
   "main": "gulpfile.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ricardo-0x07/mws-restaurant-stage-2.git"
+    "url": "git+https://github.com/ricardo-0x07/mws-restaurant-stage.git"
   },
   "keywords": [
     "gulp"
@@ -16,9 +16,9 @@
   "author": "clive cadogan",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ricardo-0x07/mws-restaurant-stage-2/issues"
+    "url": "https://github.com/ricardo-0x07/mws-restaurant-stage/issues"
   },
-  "homepage": "https://github.com/ricardo-0x07/mws-restaurant-stage-2#readme",
+  "homepage": "https://github.com/ricardo-0x07/mws-restaurant-stage#readme",
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-eslint": "^8.0.3",
