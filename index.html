@@ -11,7 +11,6 @@
   <meta name="theme-color" content="#ffffff">
   <link rel="stylesheet" src="https://normalize-css.googlecode.com/svn/trunk/normalize.css" />
   <style>
-    @charset "utf-8";
     .container-fluid {
         padding-right: 15px;
         padding-left: 15px;
@@ -146,8 +145,6 @@
       letter-spacing: 0;
       margin: 10px;
       padding: 0 10px;
-      max-width: 320px;
-      min-width: 300px;
       flex: 1;
     }
 
@@ -166,7 +163,7 @@
       font-family: Arial,sans-serif;
       margin: 15px auto;
       min-height: 380px;
-      padding: 0 30px 25px;
+      /* padding: 0 30px 25px; */
       text-align: left;
       width: 270px;
       float: 1;
@@ -175,8 +172,8 @@
       background-color: #ccc;
       display: block;
       margin: 0;
-      max-width: 100%;
-      min-width: 100%;
+      width: 100%;
+      height: auto;
     }
     #restaurants-list li h1 {
       color: #805215;
@@ -339,9 +336,9 @@
       text-align: center;
     }
     #restaurant-img {
-      width: 80%;
+      width: 100%;
       height: auto;
-      margin: 5%;
+      /* margin: 5%; */
     }
     #restaurant-address {
       font-size: 12pt;
@@ -357,7 +354,7 @@
       padding: 2px 0;
       text-align: center;
       text-transform: uppercase;
-      width: 90%;
+      width: 100%;
     }
 
     #reviews-container h2 {
@@ -390,6 +387,154 @@
     #restaurant-hours td {
       color: #666;
     }
+    .actionWrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-left: 1em;
+      padding-right: 1em;
+    }
+    .details {
+      flex: 2;
+    }
+    /* The switch - the box around the slider. Source: https://www.w3schools.com/howto/howto_css_switch.asp*/
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+      flex: 1;
+      margin-top: 1em;
+      margin-left: 1em;
+    }
+
+    /* Hide default HTML checkbox */
+    .switch input {display:none;}
+
+    /* The slider */
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+
+    input:focus + .slider {
+      box-shadow: 0 0 1px #2196F3;
+    }
+
+    input:checked + .slider:before {
+      -webkit-transform: translateX(26px);
+      -ms-transform: translateX(26px);
+      transform: translateX(26px);
+    }
+
+    /* Rounded sliders */
+    .slider.round {
+      border-radius: 34px;
+    }
+
+    .slider.round:before {
+      border-radius: 50%;
+    }
+    .form-group {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .form-group > label {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: center;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    .newReviewWrapper {
+      display: flex;
+      /* flex: 1; */
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      padding-bottom: 3em;
+    }
+    input[type=text],
+    input[type=email],
+    input[type=number],
+    textarea,
+    fieldset {
+    /* required to properly style form 
+      elements on WebKit based browsers */
+      -webkit-appearance: none;
+      
+      width : 100%;
+      border: 1px solid rgb(166, 166, 166);;
+      margin: 0;
+      
+      font-family: inherit;
+      font-size: 90%;
+      border-radius: 5px;
+      
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+    textarea:invalid:focus {
+      box-shadow: 0 0 5px 1px red;
+    }
+
+    /* textarea:valid {
+      border: 1px solid black;
+    }*/
+    input:invalid:focus { 
+      box-shadow: 0 0 5px 1px red;
+    }
+    textarea:invalid:focus {
+      outline: none;
+    }
+    input:invalid:focus {
+      outline: none;
+    }
+    .help {
+        display:none;
+        font-size:90%;
+    }
+    input:invalid:focus + .help {
+        display:inline-block;
+        color: red;
+    }
+    textarea:invalid:focus + .help {
+        display:inline-block;
+        color: red;
+    }
+
+    /* input:valid {
+      border: 1px solid black;
+    } */
   </style>
   <title>Restaurant Reviews</title>
 </head>
@@ -404,38 +549,8 @@
     </ul>
   </header>
   <main id="restaurants" class="row">
-    <section role="application"  id="map-container">
-      <div id="map"></div>
-    </section>
-    <section id="restaurants-section">
-      <div class="filter-options">
-        <h2>Filter Results</h2>
-        <select aria-label="Filter Neighborhoods" id="neighborhoods-select" name="neighborhoods" onchange="restaurants.updateRestaurants()">
-          <option value="all">All Neighborhoods</option>
-        </select>
-        <select aria-label="Filter Cuisines" id="cuisines-select" name="cuisines" onchange="restaurants.updateRestaurants()">
-          <option value="all">All Cuisines</option>
-        </select>
-      </div>
-      <div id="restaurants-scroll" class="results">
-        <ul id="restaurants-list"></ul>
-      </div>
-    </section>
   </main>
   <main id="restaurant" class="inside row">
-    <section role="application" id="map-restaurant-container">
-      <div id="map-restaurant"></div>
-    </section>
-    <section id="restaurant-container">
-      <h2 id="restaurant-name"></h2>
-      <img id="restaurant-img">
-      <p id="restaurant-cuisine"></p>
-      <p id="restaurant-address"></p>
-      <table id="restaurant-hours"></table>
-    </section>
-    <section id="reviews-container">
-      <ul id="reviews-list"></ul>
-    </section>
   </main>
   <footer id="footer" class="row">
     Copyright (c) 2017 <a href="/#"><strong>Restaurant Reviews</strong></a> All Rights Reserved.

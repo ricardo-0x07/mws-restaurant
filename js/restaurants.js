@@ -104,7 +104,15 @@ module.exports = class Restaurants {
         const ul = document.getElementById('restaurants-list');
         restaurants.forEach(restaurant => {
             ul.append(this.createRestaurantHTML(restaurant));
+            let switchInput = document.getElementById(`${restaurant.id}`);
+            switchInput.checked = (restaurant.is_favorite == 'true');
+            switchInput.addEventListener('click', (event) => {
+                console.log('event.target.checked: ', event.target.checked);
+                console.log('event.target.id: ', event.target.id);
+                this.dBHelper.favoriteRestaurant(event.target.id, event.target.checked)
+            })
         });
+
 
         function logElementEvent(eventName, element) {
             console.log(new Date().getTime(), eventName, element.getAttribute('data-src'));
@@ -142,10 +150,17 @@ module.exports = class Restaurants {
         address.innerHTML = restaurant.address;
         li.append(address);
 
-        const more = document.createElement('a');
-        more.innerHTML = 'View Details';
-        more.href = this.dBHelper.urlForRestaurant(restaurant);
-        li.append(more)
+        // const more = document.createElement('a');
+        // more.innerHTML = 'View Details';
+        // more.href = this.dBHelper.urlForRestaurant(restaurant);
+        // li.append(more)
+
+        const actionWrapper = document.createElement('div');
+        actionWrapper.className = 'actionWrapper';
+        actionWrapper.innerHTML = `
+            <a href=/#restaurant?id=${restaurant.id} class="details">View Details</a>
+            <label class="switch"><input type="checkbox" id=${restaurant.id} > <span class="slider round"></span></label>`;
+        li.appendChild(actionWrapper);
 
         return li
     }

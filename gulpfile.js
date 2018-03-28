@@ -102,7 +102,10 @@ gulp.task('sw', function() {
 });
 
 gulp.task('copy-html', function() {
-    gulp.src('./*.html').pipe(gzip({ append: true })).pipe(gulp.dest('./dist/'));
+    gulp.src('./index.html').pipe(gzip({ append: true })).pipe(gulp.dest('./dist/'));
+    gulp.src('./main.html').pipe(gulp.dest('./dist/'));
+    gulp.src('./restaurant.html').pipe(gulp.dest('./dist/'));
+    
 });
 
 gulp.task('lint', function() {
@@ -124,44 +127,47 @@ gulp.task('deploy', function() {
         .pipe(ghPages());
 });
 
-var b = browserify({
-    entries: ['./js/main.js'],
-    cache: {},
-    packageCache: {},
-    plugin: [watchify],
-    debug: true
-});
+// var b = browserify({
+//     entries: ['./js/main.js'],
+//     cache: {},
+//     packageCache: {},
+//     plugin: [watchify],
+//     debug: true
+// });
 
-gulp.task('js', bundle); // so you can run `gulp js` to build the file
-b.on('update', bundle); // on any dep update, runs the bundler
-b.on('log', gulpUtil.log); // output build logs to terminal
+// gulp.task('js', bundle); // so you can run `gulp js` to build the file
+// b.on('update', bundle); // on any dep update, runs the bundler
+// b.on('log', gulpUtil.log); // output build logs to terminal
 
-function bundle() {
-    return b.bundle()
-    // log errors if they happen
-    // .on('error', gulpUtil.log.bind(gulpUtil, 'Browserify Error'))
-        .on('error', function(err) {
-            gulpUtil.log(err.message);
-            browserSync.notify("Browserify Error!");
-            this.emit("end");
-        })
-        .pipe(source('bundle.js'))
-    // optional, remove if you don't need to buffer file contents
-        .pipe(buffer())
-    // optional, remove if you dont want sourcemaps
-        .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
-    // Add transformation tasks to the pipeline here.
-        .pipe(uglify())
-        .on('error', function (err) { gulpUtil.log(gulpUtil.colors.red('[Error]'), err.toString()); })
-        .pipe(sourcemaps.write('./')) // writes .map file
-        // .pipe(gzip({ append: true }))
-        .pipe(gulp.dest('dist/'))
-        .pipe(browserSync.stream());
-}
+// function bundle() {
+//     return b.bundle()
+//     // log errors if they happen
+//     // .on('error', gulpUtil.log.bind(gulpUtil, 'Browserify Error'))
+//         .on('error', function(err) {
+//             gulpUtil.log(err.message);
+//             browserSync.notify("Browserify Error!");
+//             this.emit("end");
+//         })
+//         .pipe(source('bundle.js'))
+//     // optional, remove if you don't need to buffer file contents
+//         .pipe(buffer())
+//     // optional, remove if you dont want sourcemaps
+//         .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
+//     // Add transformation tasks to the pipeline here.
+//         .pipe(uglify())
+//         .on('error', function (err) {
+//             console.log('err: ', err)
+//             gulpUtil.log(gulpUtil.colors.red('[Error]'), err.toString());
+//         })
+//         .pipe(sourcemaps.write('./')) // writes .map file
+//         // .pipe(gzip({ append: true }))
+//         .pipe(gulp.dest('dist/'))
+//         .pipe(browserSync.stream());
+// }
 function compile_main(watch) {
     var bundler = watchify(browserify('js/main.js', {debug: true}).transform(babelify, {
         // Use all of the ES2015 spec
-        presets: ["es2015"],
+        presets: ["es2015", 'es2017'],
         sourceMaps: true
     }));
 
