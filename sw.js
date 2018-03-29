@@ -6,7 +6,7 @@ var allCaches = [
     staticCacheName
 ];
 importScripts("/idb/lib/idb.js");
-
+// importScripts('/js/sw-toolbox/sw-toolbox.js');
 var urlsToPrefetch = [
     '/',
     '/sw.js',
@@ -97,6 +97,35 @@ self.addEventListener('fetch', function(event) {
             });
         })
     );
+});
+
+self.addEventListener('sync', function(event) {
+    if (event.tag === 'reviewPost') {
+        // event.waitUntil(
+        //     store.outbox('readonly').then(function (outbox) {
+        //         return outbox.getAll();
+        //     }).then(function (requests) {
+        //         return Promise.all(requests.map(function (request) {
+        //             return fetch(request.url, {
+        //                 credential : 'include',
+        //                 method     : request.method,
+        //                 body       : JSON.stringify(request.item),
+        //                 headers    : {
+        //                     'Accept'           : 'application/json',
+        //                     'Content-Type'     : 'application/json'
+        //                 }
+        //             }).then(function (response) {
+        //                 return response.json();
+        //             }).then(function (data) {
+        //                 // Clear the request from the outbox so it doesn't get processed again.
+        //                 return store.outbox('readwrite').then(function (outbox) {
+        //                     return outbox.delete(request.uuid);
+        //                 });
+        //             });
+        //         }));
+        //     })
+        // );
+    }
 });
 
 function serveRestaurantsData(request) {

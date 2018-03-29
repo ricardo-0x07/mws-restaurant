@@ -1,6 +1,9 @@
+const idb = require('../idb/lib/idb')
+const uuid = require('uuid4');
 /**
  * Common database helper functions.
  */
+
 module.exports = class DBHelper {
     constructor() {
         this.restaurants = [];
@@ -12,7 +15,48 @@ module.exports = class DBHelper {
         const port = 1337;
         this.DATABASE_URL = `http://localhost:${port}/`;
     }
-
+    openDatabase(db, objectStore, keyPath='uuid') {
+        return idb.open(db, 1, function(upgradeDb) {
+            upgradeDb.createObjectStore(objectStore, {
+                keyPath: keyPath
+            });
+        });
+    }
+    storeReviewPosts(data, objectStore) {
+        this.openDatabase().then(function(db) {
+            if (!db) {
+                return;
+            }
+    
+            var tx = db.transaction(objectStore, 'readwrite');
+            var store = tx.objectStore(objectStore);
+            store.put(data);
+            return tx.complete;
+        });
+    }
+    
+        
+    getAllData(objectStore) {
+        return this.openDatabase().then(function(db) {
+            if (!db) {
+                return;
+            }
+            var tx = db.transaction(objectStore);
+            var store = tx.objectStore(objectStore);
+            return store.getAll();
+        });
+    }
+    getAllRetryRequestsData(objectStore) {
+        return this.getAllData(objectStore)
+            .then(function(data) {
+                console.log('retryAllRequests data: ', data);
+                return data.text;
+            })
+            // .catch(function() {
+            //     return fetchRestaurants(request);
+            // });
+    }
+            
     favoriteRestaurant(restaurantId, is_favourite) {
         return fetch(`http://localhost:1337/restaurants/${restaurantId}/?is_favorite=${is_favourite}`, {
             method: 'PUT',
@@ -22,6 +66,30 @@ module.exports = class DBHelper {
             .catch(error => console.log("error: ", error));
     }
     createRestaurantReview(review) {
+        navigator.serviceWorker.ready
+            .then(registration => {
+                if ('sync' in registration) {
+                    var request = {
+                        uuid: uuid(),
+                        method : 'POST',
+                        url    : `http://localhost:1337/reviews/`,
+                        item   : review
+                    };
+                    this.storeReviewPosts(request, 'reviewPost')     
+                        .then(function() {
+                            // register the sync so that service worker can process
+                            return registration.sync.register('reviewPost');
+                            
+                        }).then(function() {
+                            // this.submitReviewPost(review);
+                        })
+                } else {
+                    // the browser doesn't support background sync, so just attach a plain old handler
+                    this.submitReviewPost(review);
+                }                    
+            });
+    }
+    submitReviewPost(review) {
         return fetch(`http://localhost:1337/reviews/`, {
             method: 'POST',
             headers: { Accept: "application/json" },

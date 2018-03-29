@@ -1,6 +1,7 @@
 require('./IndexController');
 const DBHelper = require('./dbhelper');
 const LazyLoad = require('vanilla-lazyload');
+const moment = require('moment');
 
 module.exports = class Restaurant {
     constructor() {
@@ -99,9 +100,7 @@ module.exports = class Restaurant {
         const submitBtn = document.getElementById('submitBtn');
         const name = document.getElementById('name'); 
         const rating = document.getElementById('rating'); 
-        const comments = document.getElementById('comments'); 
-        console.log('reviewForm.checkValidity(): ', reviewForm.checkValidity());
-        console.log('reviewForm.fields: ', reviewForm.fields);
+        const comments = document.getElementById('comments');
         if(reviewForm.checkValidity()) {
             console.log('createRestaurantReview restaurant: ', restaurant);
             const review = {
@@ -232,7 +231,8 @@ module.exports = class Restaurant {
         li.appendChild(name);
 
         const date = document.createElement('p');
-        date.innerHTML = review.date;
+        let createdAt = new Date(review.createdAt);
+        date.innerHTML = moment(createdAt).format("MMM-DD-YYYY");
         li.appendChild(date);
 
         const rating = document.createElement('p');
