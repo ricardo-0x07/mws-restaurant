@@ -18,10 +18,10 @@ var stnUrlUse = '';
 /**
 * @return - a promise that resolves to a DB
 */
-function openDatabase() {
-    return self.idb.open('restaurantdb', 1, function(upgradeDb) {
-        upgradeDb.createObjectStore('rest', {
-            keyPath: 'url'
+function openDatabase(dbname='restaurantdb', objectStoreName='rest', keyPath='url') {
+    return self.idb.open(dbname, 1, function(upgradeDb) {
+        upgradeDb.createObjectStore(objectStoreName, {
+            keyPath: keyPath
         });
     });
 }
@@ -29,29 +29,97 @@ function openDatabase() {
 /**
 */
 function _storeData(data) {
-    openDatabase().then(function(db) {
-        if (!db) {
-            return;
-        }
+    openDatabase()
+        .then(function(db) {
+            if (!db) {
+                return;
+            }
 
-        var tx = db.transaction('rest', 'readwrite');
-        var store = tx.objectStore('rest');
-        store.put(data);
-        return tx.complete;
-    });
+            var tx = db.transaction('rest', 'readwrite');
+            var store = tx.objectStore('rest');
+            store.put(data);
+            return tx.complete;
+        })
+        .catch(error => console.log(error));
 }
 
 function _checkIdb(url) {
-    return openDatabase().then(function(db) {
-        if (!db) {
-            return;
-        }
-        var tx = db.transaction('rest');
-        var store = tx.objectStore('rest');
-        return store.get(url);
-    });
+    return openDatabase()
+        .then(function(db) {
+            if (!db) {
+                return;
+            }
+            var tx = db.transaction('rest');
+            var store = tx.objectStore('rest');
+            return store.get(url);
+        })
+        .catch(error => console.log(error));
 }
 
+function getAllRetryRequestsData(dbname, objectStoreName, keyPath) {
+    return openDatabase(dbname, objectStoreName, keyPath)
+        .then(function(db) {
+            if (!db) {
+                return;
+            }
+            var tx = db.transaction(objectStoreName);
+            var store = tx.objectStore(objectStoreName);
+            return store.getAll();
+        })
+        .then(function(data) {
+            console.log('getAllRetryRequestsData data: ', data);
+            return data;
+        })
+        .catch(error => console.log('getAllRetryRequestsData error: ', error));
+}
+
+const deleteRequest = (key, objectStoreName) => {
+    console.log('key to delete: ', key);
+    return openDatabase('requestsdb', objectStoreName, 'uuid')
+        .then(function(db) {
+            if (!db) {
+                return;
+            }
+
+            var tx = db.transaction(objectStoreName, 'readwrite');
+            var store = tx.objectStore(objectStoreName);
+            store.delete(key);
+            return tx.complete;
+        })
+        .catch(error => console.log(error));
+}
+
+const processReviewPostRequests = async function(event) {
+    try {
+        const requestsData = await getAllRetryRequestsData('requestsdb', 'reviewPostRequest', 'uuid');
+        console.log('getAllRetryRequestsData requestsData: ', requestsData);
+        const response = await Promise.all(requestsData.map(async (request) => {
+            const results = await fetch(request.url, {
+                method     : request.method,
+                body       : JSON.stringify(request.item),
+                headers    : {
+                    'Accept'           : 'application/json',
+                    'Content-Type'     : 'application/json'
+                }
+            });
+            // Clear the request from the outbox so it doesn't get processed again.
+            await deleteRequest(request.uuid, 'reviewPostRequest');
+            if (!event.source.id) return;
+            console.log('event.source.id: ', event.source.id)                    
+            const client = await clients.get(event.source.id);
+            if (!client) return;
+            console.log('client: ', client)                    
+            // Send a message to the client.
+            client.postMessage({
+                name: 'reviewPostSyncComplete',
+                item: request.item
+            });
+            return results;
+        }));
+    } catch (error) {
+        console.log('background sync error: ', error);
+    }
+}
 
 self.addEventListener('install', function(event) {
     event.waitUntil(
@@ -64,6 +132,7 @@ self.addEventListener('install', function(event) {
 
 self.addEventListener('activate', function(event) {
     event.waitUntil(
+        self.clients.claim(),
         openDatabase(),
         caches.keys().then(function(cacheNames) {
             return Promise.all(
@@ -80,68 +149,71 @@ self.addEventListener('activate', function(event) {
 
 self.addEventListener('fetch', function(event) {
     var request = event.request.clone();
+    if(request.method === 'POST') {
+        event.respondWith(fetch(event.request));
+        return;
+    }
 
-    if (request.url.startsWith('http://localhost:1337/restaurants')) {
-        event.respondWith(serveRestaurantsData(request));
+    if (request.url.startsWith('http://localhost:1337/')) {
+        event.respondWith(serveRestaurantsDataNF(request));
         return;
     }
 
     event.respondWith(
-        caches.match(request).then(function(response) {
-            return response || fetch(event.request).then((response) => {
-                var resp = response.clone();
-                caches.open(staticCacheName).then(function(cache) {
-                    cache.put(request, resp);
+        caches.match(request)
+            .then(function(response) {
+                return response || fetch(event.request).then((response) => {
+                    var resp = response.clone();
+                    caches.open(staticCacheName).then(function(cache) {
+                        cache.put(request, resp);
+                    });
+                    return response;
                 });
-                return response;
-            });
-        })
+            })
+            .catch(error => console.log(error))
     );
 });
 
-self.addEventListener('sync', function(event) {
-    if (event.tag === 'reviewPost') {
-        // event.waitUntil(
-        //     store.outbox('readonly').then(function (outbox) {
-        //         return outbox.getAll();
-        //     }).then(function (requests) {
-        //         return Promise.all(requests.map(function (request) {
-        //             return fetch(request.url, {
-        //                 credential : 'include',
-        //                 method     : request.method,
-        //                 body       : JSON.stringify(request.item),
-        //                 headers    : {
-        //                     'Accept'           : 'application/json',
-        //                     'Content-Type'     : 'application/json'
-        //                 }
-        //             }).then(function (response) {
-        //                 return response.json();
-        //             }).then(function (data) {
-        //                 // Clear the request from the outbox so it doesn't get processed again.
-        //                 return store.outbox('readwrite').then(function (outbox) {
-        //                     return outbox.delete(request.uuid);
-        //                 });
-        //             });
-        //         }));
-        //     })
-        // );
+// self.addEventListener('sync', function(event) {
+//     if (event.tag === 'reviewPostRequest') {
+//         event.waitUntil(processReviewPostRequests(event));
+//     }
+// });
+self.addEventListener('message', function(event) {
+    console.log('processReviewPostRequests recieved: ', event);
+    if (event.data && event.data.name === 'processReviewPostRequests') {
+        processReviewPostRequests(event);
     }
 });
 
 function serveRestaurantsData(request) {
     return _checkIdb(request.url)
         .then(function(data) {
+            fetchRestaurants(request);
             return new Response(data.text);
         })
-        .catch(function() {
+        .catch(function(error) {
+            console.log(error)
             return fetchRestaurants(request);
+        });
+}
+
+function serveRestaurantsDataNF(request) {
+    return fetchRestaurants(request)
+        .then(function(data) {
+            return new Response(data.text);
+        })
+        .catch(function(error) {
+            console.log(error)
+            return serveRestaurantsData(request);
         });
 }
 
 function serveRestaurantByIdData(request) {
     return _checkIdb(request.url)
         .then(function(data) {
-            return new Response(data.text);
+            // fetchStn(request)
+            return new Response(data.text) ;
         })
         .catch(function() {
             return fetchStn(request);
@@ -153,7 +225,6 @@ function fetchRestaurants(request) {
     urlUse = request.url;
     return fetch(request)
         .then(status)
-    // .then(text)
         .catch(function(error) {
             console.log('Request failed', error);
         });
@@ -164,7 +235,6 @@ function fetchStn(request) {
     stnUrlUse = request.url;
     return fetch(request)
         .then(status)
-    // .then(text)
         .catch(function(error) {
             console.log('Request failed', error);
         });

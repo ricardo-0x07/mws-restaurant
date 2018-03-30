@@ -15,46 +15,46 @@ module.exports = class DBHelper {
         const port = 1337;
         this.DATABASE_URL = `http://localhost:${port}/`;
     }
-    openDatabase(db, objectStore, keyPath='uuid') {
-        return idb.open(db, 1, function(upgradeDb) {
-            upgradeDb.createObjectStore(objectStore, {
+    openDatabase(dbname, objectStoreName, keyPath='uuid') {
+        return idb.open(dbname, 1, function(upgradeDb) {
+            upgradeDb.createObjectStore(objectStoreName, {
                 keyPath: keyPath
             });
         });
     }
-    storeReviewPosts(data, objectStore) {
-        this.openDatabase().then(function(db) {
+    storeReviewPostsRequests(data, objectStoreName) {
+        return this.openDatabase('requestsdb', objectStoreName, 'uuid').then(function(db) {
             if (!db) {
                 return;
             }
     
-            var tx = db.transaction(objectStore, 'readwrite');
-            var store = tx.objectStore(objectStore);
+            var tx = db.transaction(objectStoreName, 'readwrite');
+            var store = tx.objectStore(objectStoreName);
             store.put(data);
             return tx.complete;
         });
     }
     
         
-    getAllData(objectStore) {
-        return this.openDatabase().then(function(db) {
+    getAllData(dbname, objectStoreName, keyPath) {
+        return this.openDatabase(dbname, objectStoreName, keyPath).then(function(db) {
             if (!db) {
                 return;
             }
-            var tx = db.transaction(objectStore);
-            var store = tx.objectStore(objectStore);
+            var tx = db.transaction(objectStoreName);
+            var store = tx.objectStore(objectStoreName);
             return store.getAll();
         });
     }
-    getAllRetryRequestsData(objectStore) {
-        return this.getAllData(objectStore)
+    getAllRetryRequestsData(objectStoreName) {
+        return this.getAllData(objectStoreName)
             .then(function(data) {
                 console.log('retryAllRequests data: ', data);
                 return data.text;
             })
-            // .catch(function() {
-            //     return fetchRestaurants(request);
-            // });
+            .catch(function(error) {
+                console.log(error);
+            });
     }
             
     favoriteRestaurant(restaurantId, is_favourite) {
@@ -66,27 +66,29 @@ module.exports = class DBHelper {
             .catch(error => console.log("error: ", error));
     }
     createRestaurantReview(review) {
-        navigator.serviceWorker.ready
-            .then(registration => {
-                if ('sync' in registration) {
-                    var request = {
-                        uuid: uuid(),
-                        method : 'POST',
-                        url    : `http://localhost:1337/reviews/`,
-                        item   : review
-                    };
-                    this.storeReviewPosts(request, 'reviewPost')     
-                        .then(function() {
-                            // register the sync so that service worker can process
-                            return registration.sync.register('reviewPost');
-                            
-                        }).then(function() {
-                            // this.submitReviewPost(review);
-                        })
-                } else {
-                    // the browser doesn't support background sync, so just attach a plain old handler
-                    this.submitReviewPost(review);
-                }                    
+        return this.submitReviewPost(review)
+            .catch((error)=> {
+                console.log('error: ', error);
+                return navigator.serviceWorker.ready
+                    .then(registration => {
+                        if ('sync' in registration) {
+                            console.log('sync registration: ', registration);
+                            var request = {
+                                uuid: uuid(),
+                                method : 'POST',
+                                url    : `http://localhost:1337/reviews/`,
+                                item   : review
+                            };
+                            this.storeReviewPostsRequests(request, 'reviewPostRequest')     
+                                .then(function() {
+                                    // register the sync so that service worker can process
+                                    return registration.sync.register('reviewPostRequest');
+                                })
+                        } else {
+                            // the browser doesn't support background sync, so just attach a plain old handler
+                            this.submitReviewPost(review);
+                        }                    
+                    });    
             });
     }
     submitReviewPost(review) {
@@ -94,9 +96,7 @@ module.exports = class DBHelper {
             method: 'POST',
             headers: { Accept: "application/json" },
             body: JSON.stringify(review)
-        })
-            .then(() => this.fetchRestaurants2())
-            .catch(error => console.log("error: ", error));
+        });
     }
     fetchRestaurantReviews(id) {
         return fetch(`http://localhost:1337/reviews/?restaurant_id=${id}`, {
@@ -118,7 +118,6 @@ module.exports = class DBHelper {
             .then(res => res.json())
             .then(data => {
                 this.restaurants = data;
-                console.log('fetchRestaurants2 data: ', data)
                 return data;
             })
             .catch(error => console.log("error: ", error));

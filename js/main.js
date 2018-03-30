@@ -3,6 +3,7 @@ require('./IndexController');
 const Restaurants = require('./restaurants');
 const Restaurant = require('./restaurant');
 const DBHelper = require('./dbhelper');
+import toastr from 'toastr';
 window.isMain = true;
 window.DBHelper = new DBHelper()
 
@@ -45,14 +46,6 @@ function loadMain() {
     window.restaurants.fetchNeighborhoods()
         .then(() => window.restaurants.fetchCuisines());
     console.log("document.getElementById('map'): ", document.getElementById('map'));
-    // loadContent()
-    /**
-     * Fetch neighborhoods and cuisines as soon as the page is loaded.
-     */
-    // document.addEventListener('DOMContentLoaded', (event) => {
-    //     window.restaurants.fetchNeighborhoods()
-    //         .then(() => window.restaurants.fetchCuisines());
-    // });
 
     /**
      * Initialize Google map, called from HTML.
@@ -83,7 +76,6 @@ function loadMain() {
         });
         window.restaurants.updateRestaurants();
     }
-    // window.location.reload();
 };
 function loadDetails() {
     restaurantsSection.style.display='none';
@@ -102,12 +94,34 @@ function loadDetails() {
         <table id="restaurant-hours"></table>
         </section>
         <section id="reviews-container">
+        <h3 id="reviews-title"></h3>
+        <div id="review-form-container" class="newReviewWrapper"></div>
         <ul id="reviews-list"></ul>
         </section>
     `;
     window.scrollTo(0, 0);
     breadcrumb.style.display = 'block';
     window.restaurant = new Restaurant();    
+    navigator.serviceWorker.addEventListener('message', (event) =>{
+        console.log('reviewPostSyncComplete event: ', event);
+        if (event.data && event.data.name) {
+            if (event.data.name === 'reviewPostSyncComplete') {
+                toastr.info(`Synced new review by ${name}`);
+                window.restaurant.fillReviewsHTML({ id: event.data.item.restaurant_id })
+            }
+        }
+    });
+    window.addEventListener('online', function(event) {
+        console.log('online navigator.serviceWorker', navigator.serviceWorker);
+        var messageChannel = new MessageChannel();
+        return navigator.serviceWorker.ready
+            .then((reg) => {
+                console.log('reg: ', reg);
+                reg.active.postMessage({
+                    name: 'processReviewPostRequests'
+                }, [messageChannel.port2]);
+            });
+    });
     /**
      * Initialize Google map, called from HTML.
      */
@@ -144,7 +158,6 @@ function loadDetails() {
             }
         });
     }
-    // window.location.reload();
 };
 
 window.addEventListener("hashchange",function(event){

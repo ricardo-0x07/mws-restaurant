@@ -2,6 +2,7 @@ require('./IndexController');
 const DBHelper = require('./dbhelper');
 const LazyLoad = require('vanilla-lazyload');
 const moment = require('moment');
+const toastr = require('toastr');
 
 module.exports = class Restaurant {
     constructor() {
@@ -111,19 +112,12 @@ module.exports = class Restaurant {
             };
             this.dBHelper.createRestaurantReview(review)
                 .then(() => {
-                    console.log('createRestaurantReview review: ', review);
                     name.value = ''; 
                     rating.value = ''; 
                     comments.value = ''; 
-                    document.getElementById('newReviewForm').style.display = 'none';           
-                    this.dBHelper.fetchRestaurantById2(restaurant.restaurant.id)
-                        .then(response => {
-                            this.restaurant = response;
-                            this.fillReviewsHTML(response);
-                            // callback(null, response)
-                            return response;
-                        })
-                        .catch(error => console.log('error: ', error));    
+                    document.getElementById('newReviewForm').style.display = 'none';
+                    review['createdAt'] = new Date();
+                    this.fillReviewsHTML(restaurant.restaurant, review);           
                 })
         }
     }
@@ -134,16 +128,15 @@ module.exports = class Restaurant {
     /**
      * Create all reviews HTML and add them to the webpage.
      */
-    fillReviewsHTML(restaurant) {
-        // this.reviews = [];
+    fillReviewsHTML(restaurant, newReview = null) {
         this.dBHelper.fetchRestaurantReviews(restaurant.id)
             .then(reviews => {
-                console.log('reviews: ', reviews);
+                if(newReview != null) {
+                    reviews.push(newReview);
+                }
                 const container = document.getElementById('reviews-container');
-                const title = document.createElement('h3');
+                const title = document.getElementById('reviews-title');
                 title.innerHTML = 'Reviews';
-                // container.innerHTML = '';
-                container.appendChild(title);
                 const form = `
                 <div style="width: 100%">
                     <button id="newReviewBtn" raised> New Review
@@ -179,14 +172,11 @@ module.exports = class Restaurant {
                         </form>
                     </div>
                 </div>`;
-                const formDiv = document.createElement('div');
+                const formDiv = document.getElementById('review-form-container');
                 formDiv.className = "newReviewWrapper";
                 formDiv.innerHTML = form;
-                container.appendChild(formDiv);
                 const newReviewBtn = document.getElementById('newReviewBtn');
-                console.log('newReviewBtn: ', newReviewBtn);
                 newReviewBtn.addEventListener('click', function() {
-                    console.log('newReviewBtn');
                     document.getElementById('newReviewForm').style.display = 'block';
                 });
                 const name = document.getElementById('name'); 
@@ -218,7 +208,8 @@ module.exports = class Restaurant {
                     ul.appendChild(this.createReviewHTML(review));
                 });
                 container.appendChild(ul);        
-            });
+            })
+            .catch(error => console.log(error));
     }
 
     /**
