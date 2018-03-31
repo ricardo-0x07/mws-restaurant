@@ -9,9 +9,9 @@ In **Stage Two**, I added offline indexing with IndexedDB and achieving a set of
 
 ### setup
 
-1. Ensure the server is is running
-2. Clone and download the repo and from the application root run: "npm install"
-3. To run the application from the app root run: "gulp"
+1. Clone and download the repo via a terminal
+2. Then cd into the project's server folder and run: "npm install" to install the dependencies then run "node server" to run the server
+3. Using a second terminal window cd into the projects client folder and run "npm install" to install the dependencies then run "gulp" to start the app.
 
 
 
