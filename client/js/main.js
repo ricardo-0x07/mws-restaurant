@@ -7,17 +7,14 @@ import toastr from 'toastr';
 window.isMain = true;
 window.DBHelper = new DBHelper()
 
+// Smartly redirects `http://example.com/` to `https://example.com/`,
+// but not for `http://localhost:*`, `http://127.0.0.1:*`, `https://*`, etc.
+if (!window.isSecureContext && window.location.protocol !== 'https:') {
+    window.location.protocol = 'https:';
+}
 var restaurantsSection = document.getElementById('restaurants');
 var restaurantSection = document.getElementById('restaurant');
 var breadcrumb = document.getElementById('breadcrumb');
-function loadContent() {
-    var req = new XMLHttpRequest();
-    req.open('GET', 'main.html.gz');
-    req.addEventListener('load', function () {
-        ('this.responseText: ', this.responseText);
-    });
-    req.send();
-};
 
 function loadMain() {
     restaurantSection.style.display='none';

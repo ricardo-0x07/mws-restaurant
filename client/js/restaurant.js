@@ -221,7 +221,17 @@ module.exports = class Restaurant {
         li.appendChild(date);
 
         const rating = document.createElement('p');
-        rating.innerHTML = `Rating: ${review.rating}`;
+        const unchecked = "fa fa-star";
+        const checked = "fa fa-star checked";
+        const stars = `
+                <span class="${review.rating >= 1 ? checked : unchecked}"></span>
+                <span class="${review.rating >= 2 ? checked : unchecked}"></span>
+                <span class="${review.rating >= 3 ? checked : unchecked}"></span>
+                <span class="${review.rating >= 4 ? checked : unchecked}"></span>
+                <span class="${review.rating >= 5 ? checked : unchecked}"></span>
+        `;
+        rating.innerHTML = `Rating: ${stars}`;
+        // rating.innerHTML = `Rating: ${review.rating}`;
         li.appendChild(rating);
 
         const comments = document.createElement('p');

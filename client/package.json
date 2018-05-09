@@ -4,7 +4,8 @@
   "description": "a mobile-ready web application",
   "main": "gulpfile.js",
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "dev": "gulp"
   },
   "repository": {
     "type": "git",

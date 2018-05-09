@@ -7,6 +7,7 @@ var allCaches = [
 ];
 importScripts("/idb/lib/idb.js");
 // importScripts('/js/sw-toolbox/sw-toolbox.js');
+// importScripts('/lib/uuid4/index.js');
 var urlsToPrefetch = [
     '/',
     '/sw.js',

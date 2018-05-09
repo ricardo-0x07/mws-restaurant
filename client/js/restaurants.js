@@ -160,7 +160,7 @@ module.exports = class Restaurants {
             <div style="display: flex; flex-direction: row; margin-left: 1em; align-items: center;
             justify-content: space-around;">
                 <span style="margin-top: 1em">Favorite:</span>
-                <label class="switch" aria-labwl="Favorite"> <input type="checkbox" id=${restaurant.id} > <span class="slider round"></span></label>
+                <label class="switch" aria-label="Favorite"> <input type="checkbox" id=${restaurant.id} > <span class="slider round"></span></label>
             </div>
             `;
         li.appendChild(actionWrapper);

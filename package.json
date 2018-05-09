@@ -5,6 +5,7 @@
   "description": "a Sails application",
   "keywords": [],
   "dependencies": {
+    "concurrently": "^3.5.1",
     "include-all": "^1.0.0",
     "rc": "1.0.1",
     "sails": "^0.12.13",
@@ -12,6 +13,7 @@
   },
   "scripts": {
     "debug": "node debug app.js",
+    "dev": "concurrently \"cd client && npm run dev\" \"node server\"",
     "start": "node app.js"
   },
   "main": "app.js",
